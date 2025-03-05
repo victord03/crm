@@ -4,12 +4,13 @@ import csv
 import os
 from datetime import datetime
 import uuid
-import fnmatch  # for wildcard matching
+import fnmatch  # For wildcard matching
 
-CSV_FILE = 'cases.csv'
-FIELDNAMES = ["case_id", "timestamp", "phone_number", "email", "main_reaction", "main_response", "call_count", "comments"]
+CSV_FILE = "cases.csv"
+# Updated CSV schema: two separate count fields.
+FIELDNAMES = ["case_id", "timestamp", "phone_number", "email", "main_reaction", "main_response", "email_count", "phone_count", "comments"]
 
-# Global validation function to limit input length to 100 characters.
+# Global validation: limit input length to 100 characters.
 def max100(new_text):
     return len(new_text) <= 100
 
@@ -18,7 +19,6 @@ class LoggingApp(tk.Tk):
         super().__init__()
         self.title("VK CRM")
         self.geometry("900x600")
-        # Configure grid to center container
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
@@ -30,14 +30,10 @@ class LoggingApp(tk.Tk):
             frame = F(parent=self.container, controller=self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
-
         self.show_frame(MainFrame)
 
     def show_frame(self, frame_class):
         frame = self.frames[frame_class]
-        # Clear temporary deletion message if switching to main frame.
-        if frame_class == MainFrame:
-            frame.clear_delete_message()
         frame.tkraise()
 
 class MainFrame(tk.Frame):
@@ -45,49 +41,39 @@ class MainFrame(tk.Frame):
         super().__init__(parent)
         self.controller = controller
 
-        # Main container for padding
         main_container = tk.Frame(self)
         main_container.pack(expand=True, fill="both", padx=10, pady=10)
 
-        # Top row: VK CRM label (left) and search bar with buttons (right)
-        top_frame = tk.Frame(main_container)
-        top_frame.pack(side="top", fill="x")
+        # Top left: VK CRM label.
+        title_label = tk.Label(main_container, text="VK CRM", font=("Helvetica", 16))
+        title_label.pack(anchor="w")
 
-        # VK CRM label left-aligned
-        title_label = tk.Label(top_frame, text="VK CRM", font=("Helvetica", 16))
-        title_label.pack(side="left")
+        # Below it: Create New Case button.
+        create_button = tk.Button(main_container, text="+",
+                                  bg="#00008B", fg="white",
+                                  font=("Helvetica", 12),
+                                  width=4, height=1,
+                                  command=lambda: self.controller.frames[NewCaseFrame].load_case_data(None, previous_frame="MainFrame") or self.controller.show_frame(NewCaseFrame))
+        create_button.pack(anchor="w", pady=10)
 
-        # On the right: Search bar, Search button, and Browse All button.
+        # Below that: search row.
+        search_frame = tk.Frame(main_container)
+        search_frame.pack(anchor="w", pady=10)
         vcmd = self.register(max100)
         self.search_var = tk.StringVar()
-        search_entry = tk.Entry(top_frame, textvariable=self.search_var, width=30,
+        search_entry = tk.Entry(search_frame, textvariable=self.search_var, width=30,
                                 validate="key", validatecommand=(vcmd, '%P'))
-        search_entry.pack(side="right", padx=5)
+        search_entry.pack(side="left", padx=5)
         # Bind Enter key to trigger search.
         search_entry.bind("<Return>", lambda event: self.perform_search())
+        search_button = tk.Button(search_frame, text="Search", command=self.perform_search)
+        search_button.pack(side="left", padx=5)
+        browse_all_button = tk.Button(search_frame, text="Browse All", command=self.browse_all)
+        browse_all_button.pack(side="left", padx=5)
 
-        search_button = tk.Button(top_frame, text="Search", command=self.perform_search)
-        search_button.pack(side="right", padx=5)
-
-        browse_all_button = tk.Button(top_frame, text="Browse All", command=self.browse_all)
-        browse_all_button.pack(side="right", padx=5)
-
-        # Create New button: placed below the top row, left-aligned.
-        new_button_frame = tk.Frame(main_container)
-        new_button_frame.pack(side="top", anchor="w", pady=10)
-        self.create_button = tk.Button(new_button_frame, text="+",
-                                       bg="#00008B", fg="white",
-                                       font=("Helvetica", 12),
-                                       width=4, height=1,
-                                       command=self.create_new_case)
-        self.create_button.pack()
-
-        # Bottom left: loaded cases count in small italic letters.
+        # Bottom: loaded cases count.
         self.data_label = tk.Label(main_container, text="Loaded 0 cases", font=("Helvetica", 8, "italic"))
-        self.data_label.pack(side="bottom", anchor="w", pady=(10, 0))
-        # Label for deletion message (initially empty)
-        self.delete_message_label = tk.Label(main_container, text="", font=("Helvetica", 8, "italic"), fg="red")
-        self.delete_message_label.pack(side="bottom", anchor="w")
+        self.data_label.pack(anchor="w", pady=(10, 0))
         self.load_data()
 
     def load_data(self):
@@ -98,19 +84,6 @@ class MainFrame(tk.Frame):
             self.data_label.config(text=f"Loaded {len(cases)} cases")
         else:
             self.data_label.config(text="Loaded 0 cases")
-
-    def clear_delete_message(self):
-        self.delete_message_label.config(text="")
-
-    def display_delete_message(self, msg):
-        self.delete_message_label.config(text=msg)
-        # Clear message after 5 seconds.
-        self.after(5000, lambda: self.delete_message_label.config(text=""))
-
-    def create_new_case(self):
-        new_case_frame = self.controller.frames[NewCaseFrame]
-        new_case_frame.load_case_data(None)
-        self.controller.show_frame(NewCaseFrame)
 
     def perform_search(self):
         query = self.search_var.get().strip().lower()
@@ -123,7 +96,7 @@ class MainFrame(tk.Frame):
             with open(CSV_FILE, newline='', encoding="utf-8") as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
-                    # If query contains a wildcard, use fnmatch for pattern matching.
+                    # Use wildcard matching if "*" is in the query.
                     if "*" in query:
                         if (fnmatch.fnmatch(row.get("case_id", "").lower(), query) or
                             fnmatch.fnmatch(row.get("phone_number", "").lower(), query) or
@@ -134,19 +107,15 @@ class MainFrame(tk.Frame):
                             query in row.get("phone_number", "").lower() or
                             query in row.get("email", "").lower()):
                             results.append(row)
-
-        # Clear the search field after performing search.
+        # Clear search box.
         self.search_var.set("")
-
         if not results:
             messagebox.showinfo("Search", "No results found.")
         elif len(results) == 1:
-            new_case_frame = self.controller.frames[NewCaseFrame]
-            new_case_frame.load_case_data(results[0])
+            self.controller.frames[NewCaseFrame].load_case_data(results[0], previous_frame="MainFrame")
             self.controller.show_frame(NewCaseFrame)
         else:
-            results_frame = self.controller.frames[ResultsFrame]
-            results_frame.load_results("Search results", results)
+            self.controller.frames[ResultsFrame].load_results("Search results", results)
             self.controller.show_frame(ResultsFrame)
 
     def browse_all(self):
@@ -158,24 +127,24 @@ class MainFrame(tk.Frame):
         if not results:
             messagebox.showinfo("Browse All", "No entries found.")
         else:
-            results_frame = self.controller.frames[ResultsFrame]
-            results_frame.load_results("All entries", results)
+            self.controller.frames[ResultsFrame].load_results("All entries", results)
             self.controller.show_frame(ResultsFrame)
+
 
 class NewCaseFrame(tk.Frame):
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
+        self.current_case = None  # Initialize current_case here.
+        self.previous_frame = "MainFrame"  # Default previous frame.
 
-        # Container for centering and resizing.
         container = tk.Frame(self)
         container.pack(expand=True, fill="both", padx=10, pady=10)
 
-        # Top frame: left for Case ID and right for Timestamp.
+        # Top frame: Case ID on left, Timestamp on right.
         top_frame = tk.Frame(container)
         top_frame.pack(fill="x", pady=10)
 
-        # Left side: Case ID (read-only and selectable)
         left_top = tk.Frame(top_frame)
         left_top.pack(side="left", padx=5)
         tk.Label(left_top, text="Case ID:").pack(side="left")
@@ -184,7 +153,6 @@ class NewCaseFrame(tk.Frame):
                                       state="readonly", width=20, relief="flat")
         self.case_id_entry.pack(side="left", padx=5)
 
-        # Right side: Timestamp (label then read-only entry)
         right_top = tk.Frame(top_frame)
         right_top.pack(side="right", padx=5)
         tk.Label(right_top, text="Timestamp:").pack(side="left")
@@ -193,30 +161,27 @@ class NewCaseFrame(tk.Frame):
                                         state="readonly", width=20, relief="flat")
         self.timestamp_entry.pack(side="left", padx=5)
 
-        # Form frame for remaining fields.
+        # Form frame.
         form_frame = tk.Frame(container)
         form_frame.pack(pady=10, fill="both", expand=True)
-        # Allow Comments field to expand.
         form_frame.grid_columnconfigure(1, weight=1)
-        form_frame.grid_rowconfigure(5, weight=1)
+        form_frame.grid_rowconfigure(6, weight=1)
         vcmd = self.register(max100)
 
-        # Phone number field.
         tk.Label(form_frame, text="Phone number:").grid(row=0, column=0, sticky="e", pady=5, padx=5)
         self.phone_var = tk.StringVar()
         self.phone_entry = tk.Entry(form_frame, textvariable=self.phone_var, width=40,
                                     validate="key", validatecommand=(vcmd, '%P'))
         self.phone_entry.grid(row=0, column=1, pady=5, padx=5)
-        self.phone_entry.bind("<FocusOut>", self.update_call_count)
+        self.phone_entry.bind("<FocusOut>", self.update_counts)
 
-        # Email address field.
         tk.Label(form_frame, text="Email address:").grid(row=1, column=0, sticky="e", pady=5, padx=5)
         self.email_var = tk.StringVar()
         self.email_entry = tk.Entry(form_frame, textvariable=self.email_var, width=40,
                                     validate="key", validatecommand=(vcmd, '%P'))
         self.email_entry.grid(row=1, column=1, pady=5, padx=5)
+        self.email_entry.bind("<FocusOut>", self.update_counts)
 
-        # Main reaction dropdown.
         tk.Label(form_frame, text="Main reaction:").grid(row=2, column=0, sticky="e", pady=5, padx=5)
         self.main_reaction_var = tk.StringVar()
         self.main_reaction_combo = ttk.Combobox(form_frame, textvariable=self.main_reaction_var,
@@ -225,7 +190,6 @@ class NewCaseFrame(tk.Frame):
         self.main_reaction_combo.set("Select an option")
         self.main_reaction_combo.grid(row=2, column=1, pady=5, padx=5)
 
-        # Main response dropdown.
         tk.Label(form_frame, text="Main response:").grid(row=3, column=0, sticky="e", pady=5, padx=5)
         self.main_response_var = tk.StringVar()
         self.main_response_combo = ttk.Combobox(form_frame, textvariable=self.main_response_var,
@@ -234,35 +198,43 @@ class NewCaseFrame(tk.Frame):
         self.main_response_combo.set("Select an option")
         self.main_response_combo.grid(row=3, column=1, pady=5, padx=5)
 
-        # Call count display (starts blank).
-        tk.Label(form_frame, text="Call count:").grid(row=4, column=0, sticky="e", pady=5, padx=5)
-        self.call_count_var = tk.StringVar(value="")
-        self.call_count_label = tk.Label(form_frame, textvariable=self.call_count_var, width=5, relief="sunken")
-        self.call_count_label.grid(row=4, column=1, sticky="w", pady=5, padx=5)
+        tk.Label(form_frame, text="Cases with this email:").grid(row=4, column=0, sticky="e", pady=5, padx=5)
+        self.email_count_var = tk.StringVar(value="")
+        self.email_count_label = tk.Label(form_frame, textvariable=self.email_count_var, width=5, relief="sunken")
+        self.email_count_label.grid(row=4, column=1, sticky="w", pady=5, padx=5)
 
-        # Comments section: a resizable text field.
-        tk.Label(form_frame, text="Comments:").grid(row=5, column=0, sticky="ne", pady=5, padx=5)
+        tk.Label(form_frame, text="Cases with this phone number:").grid(row=5, column=0, sticky="e", pady=5, padx=5)
+        self.phone_count_var = tk.StringVar(value="")
+        self.phone_count_label = tk.Label(form_frame, textvariable=self.phone_count_var, width=5, relief="sunken")
+        self.phone_count_label.grid(row=5, column=1, sticky="w", pady=5, padx=5)
+
+        tk.Label(form_frame, text="Comments:").grid(row=6, column=0, sticky="ne", pady=5, padx=5)
         self.comments_text = tk.Text(form_frame, height=5, width=40)
-        self.comments_text.grid(row=5, column=1, sticky="nsew", pady=5, padx=5)
+        self.comments_text.grid(row=6, column=1, sticky="nsew", pady=5, padx=5)
 
-        # Button frame for Update, Delete, and Back.
+        # Button frame: using grid so that Update is left, Delete is middle, and Back is right.
         button_frame = tk.Frame(container)
-        button_frame.pack(pady=10)
+        button_frame.pack(pady=10, fill="x")
+        button_frame.columnconfigure(0, weight=1)
+        button_frame.columnconfigure(1, weight=1)
+        button_frame.columnconfigure(2, weight=1)
         self.update_button = tk.Button(button_frame, text="Update", bg="#00008B", fg="white",
-                                       font=("Helvetica", 10), width=10, command=self.save_case)
-        self.update_button.pack(side="left", padx=5)
+                                       font=("Helvetica", 10), command=self.save_case)
+        self.update_button.grid(row=0, column=0, padx=5)
         self.delete_button = tk.Button(button_frame, text="Delete", bg="#00008B", fg="white",
-                                       font=("Helvetica", 10), width=10, command=self.delete_case)
-        self.delete_button.pack(side="left", padx=5)
+                                       font=("Helvetica", 10), command=self.delete_case)
+        # Show or hide Delete button based on self.current_case.
+        if self.current_case is None:
+            self.delete_button.grid_forget()
+        else:
+            self.delete_button.grid(row=0, column=1, padx=5)
         self.back_button = tk.Button(button_frame, text="Back", bg="#00008B", fg="white",
-                                     font=("Helvetica", 10), width=10,
-                                     command=lambda: self.controller.show_frame(MainFrame))
-        self.back_button.pack(side="left", padx=5)
+                                     font=("Helvetica", 10), command=self.go_back)
+        self.back_button.grid(row=0, column=2, padx=5)
 
-        self.current_case = None
-
-    def load_case_data(self, case_data):
-        """Load case data into the form; if None, initialize a new case."""
+    def load_case_data(self, case_data, previous_frame="MainFrame"):
+        """Load case data into the form. 'previous_frame' indicates which frame to return to when Back is clicked."""
+        self.previous_frame = previous_frame
         self.current_case = case_data
         if case_data is None:
             new_case_id = uuid.uuid4().hex[:8]
@@ -272,8 +244,11 @@ class NewCaseFrame(tk.Frame):
             self.email_var.set("")
             self.main_reaction_combo.set("Select an option")
             self.main_response_combo.set("Select an option")
-            self.call_count_var.set("")
+            self.email_count_var.set("")
+            self.phone_count_var.set("")
             self.comments_text.delete("1.0", "end")
+            # Hide Delete button for new case.
+            self.delete_button.grid_forget()
         else:
             self.case_id_var.set(case_data.get("case_id", ""))
             self.timestamp_var.set(case_data.get("timestamp", ""))
@@ -283,40 +258,57 @@ class NewCaseFrame(tk.Frame):
             self.main_reaction_combo.set(mr if mr else "Select an option")
             mresp = case_data.get("main_response", "")
             self.main_response_combo.set(mresp if mresp else "Select an option")
-            self.call_count_var.set(case_data.get("call_count", ""))
+            self.email_count_var.set(case_data.get("email_count", ""))
+            self.phone_count_var.set(case_data.get("phone_count", ""))
             self.comments_text.delete("1.0", "end")
             self.comments_text.insert("1.0", case_data.get("comments", ""))
+            # Show Delete button when editing an existing case.
+            self.delete_button.grid(row=0, column=1, padx=5)
 
-    def update_call_count(self, event=None):
-        """When phone field loses focus, update call count (only in-memory here)."""
+    def update_counts(self, event=None):
+        """Update the counters based on the current email and phone values."""
+        email = self.email_var.get().strip().lower()
         phone = self.phone_var.get().strip()
-        if not phone:
-            self.call_count_var.set("")
-            return
-        count = ""
+        email_count = 0
+        phone_count = 0
         if os.path.exists(CSV_FILE):
             with open(CSV_FILE, newline='', encoding="utf-8") as csvfile:
                 reader = csv.DictReader(csvfile)
-                count = sum(1 for row in reader if row.get("phone_number", "").strip() == phone)
-        self.call_count_var.set(str(count) if count else "")
+                for row in reader:
+                    if email and row.get("email", "").strip().lower() == email:
+                        email_count += 1
+                    if phone and row.get("phone_number", "").strip() == phone:
+                        phone_count += 1
+        # For a new case, include this unsaved record.
+        if self.current_case is None:
+            if email:
+                email_count += 1
+            if phone:
+                phone_count += 1
+        self.email_count_var.set(str(email_count) if email_count else "")
+        self.phone_count_var.set(str(phone_count) if phone_count else "")
 
     def save_case(self):
-        """Save (or update) the current record and update call counts for matching phone numbers."""
+        """Save (or update) the current record and update counters across matching records."""
+        email = self.email_var.get().strip().lower()
         phone = self.phone_var.get().strip()
         rows = []
         if os.path.exists(CSV_FILE):
             with open(CSV_FILE, newline='', encoding="utf-8") as csvfile:
                 reader = csv.DictReader(csvfile)
                 rows = list(reader)
-        if phone:
-            count = sum(1 for row in rows if row.get("phone_number", "").strip() == phone)
-            if self.current_case is None:
-                count += 1
-            for row in rows:
-                if row.get("phone_number", "").strip() == phone:
-                    row["call_count"] = str(count)
-        else:
-            count = ""
+        email_count = sum(1 for row in rows if row.get("email", "").strip().lower() == email)
+        phone_count = sum(1 for row in rows if row.get("phone_number", "").strip() == phone)
+        if self.current_case is None:
+            if email:
+                email_count += 1
+            if phone:
+                phone_count += 1
+        for row in rows:
+            if email and row.get("email", "").strip().lower() == email:
+                row["email_count"] = str(email_count)
+            if phone and row.get("phone_number", "").strip() == phone:
+                row["phone_count"] = str(phone_count)
         data = {
             "case_id": self.case_id_var.get(),
             "timestamp": self.timestamp_var.get(),
@@ -324,7 +316,8 @@ class NewCaseFrame(tk.Frame):
             "email": self.email_var.get().strip(),
             "main_reaction": self.main_reaction_combo.get() if self.main_reaction_combo.get() != "Select an option" else "",
             "main_response": self.main_response_combo.get() if self.main_response_combo.get() != "Select an option" else "",
-            "call_count": str(count),
+            "email_count": str(email_count),
+            "phone_count": str(phone_count),
             "comments": self.comments_text.get("1.0", "end").strip()
         }
         updated = False
@@ -343,44 +336,25 @@ class NewCaseFrame(tk.Frame):
         self.controller.show_frame(MainFrame)
 
     def delete_case(self):
-        """Show confirmation pop-up; if confirmed, delete record from CSV and return to main page."""
+        """Immediately delete the current record and then return to the previous interface."""
         case_id = self.case_id_var.get()
-        popup = tk.Toplevel(self)
-        popup.title("Confirm Deletion")
-        popup.grab_set()  # Make modal
+        rows = []
+        if os.path.exists(CSV_FILE):
+            with open(CSV_FILE, newline='', encoding="utf-8") as csvfile:
+                reader = csv.DictReader(csvfile)
+                rows = [row for row in reader if row.get("case_id") != case_id]
+        with open(CSV_FILE, "w", newline='', encoding="utf-8") as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=FIELDNAMES)
+            writer.writeheader()
+            writer.writerows(rows)
+        self.go_back()
 
-        msg = f"You are about to delete CaseID {case_id}. Are you sure you want to continue?"
-        tk.Label(popup, text=msg, wraplength=300).pack(padx=20, pady=20)
-
-        btn_frame = tk.Frame(popup)
-        btn_frame.pack(pady=10)
-
-        def confirm_delete():
-            rows = []
-            if os.path.exists(CSV_FILE):
-                with open(CSV_FILE, newline='', encoding="utf-8") as csvfile:
-                    reader = csv.DictReader(csvfile)
-                    rows = [row for row in reader if row.get("case_id") != case_id]
-            with open(CSV_FILE, "w", newline='', encoding="utf-8") as csvfile:
-                writer = csv.DictWriter(csvfile, fieldnames=FIELDNAMES)
-                writer.writeheader()
-                writer.writerows(rows)
-            popup.destroy()
-            main_frame = self.controller.frames[MainFrame]
-            main_frame.load_data()
-            # Display a generic deletion confirmation message.
-            main_frame.display_delete_message("Entry deleted successfully")
+    def go_back(self):
+        """Return to the previous interface (ResultsFrame if coming from search, otherwise MainFrame)."""
+        if self.previous_frame == "ResultsFrame":
+            self.controller.show_frame(ResultsFrame)
+        else:
             self.controller.show_frame(MainFrame)
-
-        def cancel_delete():
-            popup.destroy()
-
-        yes_button = tk.Button(btn_frame, text="Yes", bg="#00008B", fg="white",
-                               font=("Helvetica", 10), width=10, command=confirm_delete)
-        yes_button.pack(side="left", padx=5)
-        no_button = tk.Button(btn_frame, text="No", bg="#00008B", fg="white",
-                              font=("Helvetica", 10), width=10, command=cancel_delete)
-        no_button.pack(side="left", padx=5)
 
 class ResultsFrame(tk.Frame):
     def __init__(self, parent, controller):
@@ -397,7 +371,7 @@ class ResultsFrame(tk.Frame):
             self.tree.column(col, width=150)
         self.tree.pack(expand=True, fill="both")
         self.tree.bind("<Double-1>", self.on_row_double_click)
-        back_button = tk.Button(container, text="Back", command=lambda: controller.show_frame(MainFrame))
+        back_button = tk.Button(container, text="Back", command=lambda: self.controller.show_frame(MainFrame))
         back_button.pack(pady=5)
 
     def load_results(self, header, results):
@@ -425,8 +399,7 @@ class ResultsFrame(tk.Frame):
                             record = row
                             break
             if record:
-                new_case_frame = self.controller.frames[NewCaseFrame]
-                new_case_frame.load_case_data(record)
+                self.controller.frames[NewCaseFrame].load_case_data(record, previous_frame="ResultsFrame")
                 self.controller.show_frame(NewCaseFrame)
 
 if __name__ == "__main__":

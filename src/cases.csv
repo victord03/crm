@@ -1,6 +1,5 @@
-case_id,timestamp,phone_number,email,main_reaction,main_response,call_count,comments
-15f3568b,2025-03-05 10:44:55,6956121499,victor.kaklamanis@accenture.com,I am not interested,I will call you back,1,Testing.. Comments field not resizable.
-ecd697c7,2025-03-05 10:52:37,2105747245,jokerv@hotmail.com,I am not interested,I will call you back,2,Testing 3.
-37512ce6,2025-03-05 10:53:46,2105747245,anotheremail@hotmail.com,I am not interested,I will call you back,2,"Test 3. 
-
-Test 5, called again."
+case_id,timestamp,phone_number,email,main_reaction,main_response,email_count,phone_count,comments
+205d9ce1,2025-03-05 11:48:21,6977456829,victor.kaklamanis@accenture.com,,,2,1,Testing
+6b6ab0a1,2025-03-05 11:48:49,6956121498,victor.kaklamanis@accenture.com,I am not interested,I will call you back,2,1,Testing entries deletion
+e5a3734c,2025-03-05 11:49:21,6956121498,victor.kaklamanis@gmail.com,,,1,1,Testing counters
+aac69fab,2025-03-05 11:59:44,6956121499,sales@avg.com,I am not interested,I will call you back,1,1,
