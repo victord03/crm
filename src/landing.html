@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VK CRM</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .create-new-case-button {
+            background-color: #ADD8E6; /* Light blue */
+            color: white; /* Bright white plus sign */
+            font-size: 18px;
+            border: 1px solid black; /* 1px border */
+            padding: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>VK CRM</h1>
+        <button id="create-case" class="create-new-case-button">+</button>
+        <br><br>
+        <div class="search-section">
+            <input type="text" id="search-box" placeholder="Search by CaseID, Email, Phone">
+            <button id="search-btn">Search</button>
+            <button id="browse-all">Browse All</button>
+        </div>
+        <div id="results"></div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
