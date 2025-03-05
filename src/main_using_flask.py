@@ -1,10 +1,14 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import uuid
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///crm.db'
 db = SQLAlchemy(app)
+
+def create_case_id(length=8) -> str:
+    return str(uuid.uuid4())[:length]
 
 class Case(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -21,10 +25,10 @@ class Case(db.Model):
 def home():
     return "Flask CRM API is running! Use the correct endpoints."
 
-@app.route('/cases', methods=['GET'])
+@app.route('/display_cases', methods=['GET'])
 def get_cases():
-    cases = Case.query.all()
-    return jsonify([{ 'case_id': c.case_id, 'phone_number': c.phone_number, 'email': c.email, 'timestamp': c.timestamp } for c in cases])
+    cases = Case.query.all()  # Fetch all cases from the database
+    return render_template('display_cases.html', cases=cases)  # Pass the cases to the template
 
 @app.route('/case/<case_id>', methods=['GET'])
 def get_case(case_id):
@@ -42,21 +46,52 @@ def get_case(case_id):
         })
     return jsonify({'message': 'Case not found'}), 404
 
-@app.route('/case', methods=['POST'])
+# Route to display the form
+@app.route('/create_case', methods=['GET'])
+def create_case_form():
+    return render_template('create_case.html')
+
+# Route to handle form submission (POST request)
+@app.route('/create_case', methods=['POST'])
 def create_case():
-    data = request.json
-    new_case = Case(
-        case_id=data['case_id'],
-        phone_number=data['phone_number'],
-        email=data['email'],
-        main_reaction=data.get('main_reaction'),
-        main_response=data.get('main_response'),
-        call_count=data.get('call_count', 0),
-        comments=data.get('comments')
-    )
-    db.session.add(new_case)
-    db.session.commit()
-    return jsonify({'message': 'Case created successfully'}), 201
+
+    try:
+        # Get data from the form
+        phone_number = request.form['phone_number']
+        email = request.form['email']
+        main_reaction = request.form['main_reaction']
+        main_response = request.form['main_response']
+        comments = request.form['comments']
+
+        # Enforce character limits in Flask code
+        if len(phone_number) > 50:
+            return jsonify({'error': 'Phone number exceeds maximum length of 50 characters'}), 400
+        if len(email) > 50:
+            return jsonify({'error': 'Email exceeds maximum length of 50 characters'}), 400
+
+        # Create a new case object
+        new_case = Case(
+            case_id=create_case_id(),
+            phone_number=phone_number,
+            email=email,
+            main_reaction=main_reaction,
+            main_response=main_response,
+            comments=comments
+        )
+
+        # Add to the database
+        db.session.add(new_case)
+        db.session.commit()
+
+        # Redirect to a confirmation page or back to the form
+        return redirect(url_for('home'))
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/delete_case', methods=['GET'])
+def delete_case_form():
+    return render_template('delete_case.html')
 
 @app.route('/case/<case_id>', methods=['DELETE'])
 def delete_case(case_id):
@@ -68,6 +103,9 @@ def delete_case(case_id):
     return jsonify({'message': 'Case not found'}), 404
 
 if __name__ == '__main__':
+
     with app.app_context():
         db.create_all()
     app.run(debug=True)
+
+

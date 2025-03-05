@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Case</title>
+    <style>
+        /* Basic page styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f3e3; /* Light creme background */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #3e3e3e; /* Dark grey text color */
+        }
+
+        /* Styling for the container (form and title) */
+        .container {
+            background-color: #e6d5b8; /* Light brown background */
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 500px;
+            transform: scale(0.85); /* Scale down the whole form */
+            transform-origin: top center; /* Ensure scaling is from the top */
+        }
+
+        /* Title styling */
+        h1 {
+            font-size: 2.5rem;
+            color: #6e4b3a; /* Dark brown */
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* Label and input field styling */
+        label {
+            font-size: 1.1rem;
+            font-weight: 500;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+            background-color: #fff;
+            box-sizing: border-box;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #a47c5c; /* Highlight color on focus */
+            box-shadow: 0px 0px 5px rgba(164, 124, 92, 0.7);
+        }
+
+        /* Comments field: only resize vertically */
+        textarea {
+            resize: vertical;
+        }
+
+        /* Button styling */
+        button {
+            background-color: #a47c5c; /* Light brown button */
+            color: white;
+            font-size: 1.1rem;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #8b5f3b; /* Darker brown on hover */
+            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            background-color: #7b4a2f; /* Even darker brown on click */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Create a New Case</h1>
+        <form action="/create_case" method="POST">
+
+            <label for="phone_number">Phone Number:</label>
+            <input type="text" id="phone_number" name="phone_number" maxlength="50" required><br>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" maxlength="50"><br>
+
+            <label for="main_reaction">Main Reaction:</label>
+            <input type="text" id="main_reaction" name="main_reaction"><br>
+
+            <label for="main_response">Main Response:</label>
+            <input type="text" id="main_response" name="main_response"><br>
+
+            <label for="comments">Comments:</label>
+            <textarea id="comments" name="comments" maxlength="400"></textarea><br>
+
+            <button type="submit">Create Case</button>
+        </form>
+    </div>
+
+</body>
+</html>

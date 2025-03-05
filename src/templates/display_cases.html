@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cases</title>
+    <style>
+        /* Basic page styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f3e3; /* Light creme background */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #3e3e3e; /* Dark grey text color */
+        }
+
+        /* Styling for the container (form and title) */
+        .container {
+            background-color: #e6d5b8; /* Light brown background */
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 900px;
+            overflow-x: auto;
+        }
+
+        /* Title styling */
+        h2 {
+            font-size: 2rem;
+            color: #6e4b3a; /* Dark brown */
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* Table styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ccc;
+        }
+
+        th {
+            background-color: #a47c5c; /* Light brown */
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        td {
+            background-color: #fff;
+            font-size: 1rem;
+        }
+
+        /* Table row hover effect */
+        tr:hover {
+            background-color: #f1e1d1; /* Light brown hover effect */
+        }
+
+        /* Button styling */
+        button {
+            background-color: #a47c5c; /* Light brown button */
+            color: white;
+            font-size: 1.1rem;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #8b5f3b; /* Darker brown on hover */
+            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            background-color: #7b4a2f; /* Even darker brown on click */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>All Cases</h2>
+
+        <!-- Table to display case results -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Case ID</th>
+                    <th>Phone Number</th>
+                    <th>Email</th>
+                    <th>Main Reaction</th>
+                    <th>Main Response</th>
+                    <th>Comments</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for case in cases %}
+                    <tr>
+                        <td>{{ case.case_id }}</td>
+                        <td>{{ case.phone_number }}</td>
+                        <td>{{ case.email }}</td>
+                        <td>{{ case.main_reaction }}</td>
+                        <td>{{ case.main_response }}</td>
+                        <td>{{ case.comments }}</td>
+                        <td>
+                            <button onclick="window.location.href='/case/{{ case.case_id }}'">View</button>
+                            <button onclick="window.location.href='/case/{{ case.case_id }}/delete'">Delete</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Optional: Add button to create a new case -->
+        <button onclick="window.location.href='/create_case'">Create New Case</button>
+    </div>
+
+</body>
+</html>
