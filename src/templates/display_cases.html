@@ -89,6 +89,23 @@
         button:active {
             background-color: #7b4a2f; /* Even darker brown on click */
         }
+
+        /* Styling for the button container (2 buttons) */
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+        /* Equal width for both buttons */
+        .button-container button {
+            width: 48%; /* 48% width to have a gap in between */
+        }
+
+        /* Margin between the buttons */
+        .button-container button:nth-child(1) {
+            margin-right: 4%;
+        }
     </style>
 </head>
 <body>
@@ -127,8 +144,11 @@
             </tbody>
         </table>
 
-        <!-- Optional: Add button to create a new case -->
-        <button onclick="window.location.href='/create_case'">Create New Case</button>
+        <!-- Button container with equal buttons and a small gap between them -->
+        <div class="button-container">
+            <button onclick="window.location.href='/'">Back to Home</button>
+            <button onclick="window.location.href='/create_case'">Create New Case</button>
+        </div>
     </div>
 
 </body>

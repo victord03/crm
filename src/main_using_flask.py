@@ -23,7 +23,7 @@ class Case(db.Model):
 
 @app.route('/')
 def home():
-    return "Flask CRM API is running! Use the correct endpoints."
+    return render_template('home.html')
 
 @app.route('/display_cases', methods=['GET'])
 def get_cases():
@@ -103,7 +103,6 @@ def delete_case(case_id):
     return jsonify({'message': 'Case not found'}), 404
 
 if __name__ == '__main__':
-
     with app.app_context():
         db.create_all()
     app.run(debug=True)

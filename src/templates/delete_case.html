@@ -84,6 +84,83 @@
         button:active {
             background-color: #7b4a2f; /* Even darker brown on click */
         }
+
+        /* Styling for the button container (2 buttons) */
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+        /* Equal width for both buttons */
+        .button-container button {
+            width: 48%; /* 48% width to have a gap in between */
+        }
+
+        /* Margin between the buttons */
+        .button-container button:nth-child(1) {
+            margin-right: 4%;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+        }
+
+        .modal-content {
+            background-color: #f9f3e3; /* Light creme background */
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 400px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 0;
+            right: 10px;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Button styling inside modal */
+        button {
+            background-color: #a47c5c;
+            color: white;
+            font-size: 1.1rem;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:hover {
+            background-color: #8b5f3b;
+        }
+
+        button:active {
+            background-color: #7b4a2f;
+        }
+
     </style>
 </head>
 <body>
@@ -93,49 +170,110 @@
 
         <!-- Input for the Case ID to delete -->
         <label for="case_id">Enter Case ID to Delete:</label>
-        <input type="text" id="case_id" name="case_id" placeholder="Enter case ID here" required>
+        <input type="text" id="case_id" name="case_id" placeholder="Enter case ID here" required style="font-style: italic; font-size: 0.9rem;">
 
-        <button onclick="deleteCase()">Delete Case</button>
+        <!-- Button container with equal buttons and a small gap between them -->
+        <div class="button-container">
+            <button type="button" onclick="window.location.href='/'">Back to Home</button>
+            <button type="button" onclick="deleteCase()">Delete Case</button>
+        </div>
     </div>
 
     <script>
+        // Show the error modal with an OK button to close
+        function showError(message) {
+            document.getElementById("errorMessage").innerText = message;
+            document.getElementById("errorModal").style.display = "block";
+        }
+
+        // Close the error modal
+        document.getElementById("closeError").onclick = function() {
+            document.getElementById("errorModal").style.display = "none";
+        };
+
+        // Show the confirmation modal
+        function showConfirmModal(callback) {
+            document.getElementById("confirmModal").style.display = "block";
+
+            // Add event listener to handle the confirmation
+            document.getElementById("confirmDeleteBtn").onclick = function() {
+                callback(true);
+                closeConfirmModal();
+            };
+
+            // Add event listener to handle cancel
+            document.getElementById("cancelDeleteBtn").onclick = function() {
+                callback(false);
+                closeConfirmModal();
+            };
+        }
+
+        // Close the confirmation modal
+        function closeConfirmModal() {
+            document.getElementById("confirmModal").style.display = "none";
+        }
+
+        // Modified deleteCase function
         function deleteCase() {
-            // Get the case_id from the input field
             const caseId = document.getElementById("case_id").value;
 
             if (!caseId) {
-                alert("Please enter a valid case ID.");
+                showError("Please enter a valid case ID.");
                 return;
             }
 
-            // Ask for confirmation before proceeding with the deletion
-            const confirmDelete = window.confirm("Are you sure you want to delete this case? This action cannot be undone.");
-
-            if (confirmDelete) {
-                // Construct the URL for the DELETE request
-                const url = `/case/${caseId}`;
-
-                // Make the DELETE request
-                fetch(url, {
-                    method: 'DELETE',
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.message === 'Case deleted successfully') {
-                        alert('Case deleted successfully');
-                    } else {
-                        alert('Error: ' + data.message);
+            // Simulate an API check for valid case ID (This should be replaced with actual API call)
+            fetch(`/case/${caseId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Case not found");
                     }
+                    return response.json();
+                })
+                .then(data => {
+                    // Case exists, show the confirmation modal
+                    showConfirmModal(function(confirmDelete) {
+                        if (confirmDelete) {
+                            // Proceed with deletion
+                            fetch(`/case/${caseId}`, { method: 'DELETE' })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.message === 'Case deleted successfully') {
+                                        showError('Case deleted successfully');
+                                    } else {
+                                        showError('Error: ' + data.message);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    showError('An error occurred while deleting the case.');
+                                });
+                        }
+                    });
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while deleting the case.');
+                    showError("Error: Case not found.");
                 });
-            } else {
-                alert("Deletion cancelled.");
-            }
         }
     </script>
+
+    <!-- Error Modal -->
+    <div id="errorModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeError">&times;</span>
+            <p id="errorMessage">An error occurred.</p>
+            <button onclick="document.getElementById('errorModal').style.display='none'">OK</button>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <p>Are you sure you want to delete this case? This action cannot be undone.</p>
+            <button id="confirmDeleteBtn">Yes, Delete</button>
+            <button id="cancelDeleteBtn">Cancel</button>
+        </div>
+    </div>
 
 </body>
 </html>

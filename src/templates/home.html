@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask VK CRM API</title>
+    <style>
+        /* Basic page styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f3e3; /* Light creme background */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #3e3e3e; /* Dark grey text color */
+            text-align: center;
+        }
+
+        /* Container for the main content */
+        .container {
+            background-color: #e6d5b8; /* Light brown background */
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        /* Title styling */
+        h1 {
+            font-size: 2.5rem;
+            color: #6e4b3a; /* Dark brown */
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            color: #6e4b3a;
+        }
+
+        /* Button styling */
+        .button {
+            background-color: #a47c5c; /* Light brown button */
+            color: white;
+            font-size: 1.1rem;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .button:hover {
+            background-color: #8b5f3b; /* Darker brown on hover */
+            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .button:active {
+            background-color: #7b4a2f; /* Even darker brown on click */
+        }
+
+        /* Additional space for buttons */
+        .button-container {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Flask VK CRM API</h1>
+        <p>Welcome to the CRM API! Use the buttons below to navigate through the system.</p>
+
+        <!-- Buttons that link to other pages -->
+        <div class="button-container">
+            <a href="/display_cases">
+                <button class="button">Cases</button>
+            </a>
+            <a href="/create_case">
+                <button class="button">New Case</button>
+            </a>
+            <a href="/delete_case">
+                <button class="button">Delete a Case</button>
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>

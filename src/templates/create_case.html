@@ -91,6 +91,23 @@
         button:active {
             background-color: #7b4a2f; /* Even darker brown on click */
         }
+
+        /* Styling for the button container (2 buttons) */
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+        /* Equal width for both buttons */
+        .button-container button {
+            width: 48%; /* 48% width to have a gap in between */
+        }
+
+        /* Margin between the buttons */
+        .button-container button:nth-child(1) {
+            margin-right: 4%;
+        }
     </style>
 </head>
 <body>
@@ -114,7 +131,11 @@
             <label for="comments">Comments:</label>
             <textarea id="comments" name="comments" maxlength="400"></textarea><br>
 
-            <button type="submit">Create Case</button>
+            <!-- Button container with equal buttons and a small gap between them -->
+            <div class="button-container">
+                <button type="button" onclick="window.location.href='/'">Back to Home</button>
+                <button type="submit">Create Case</button>
+            </div>
         </form>
     </div>
 
